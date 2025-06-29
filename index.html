@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATIP & PA Flashcards - Retro Study Tool</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
+        
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2A2D34;
+            --light: #F7FFF7;
+            --purple: #9B5DE5;
+            --orange: #F15BB5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(3rem, 8vw, 5rem);
+            color: var(--light);
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .category-selector {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            background: var(--primary);
+            color: var(--light);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .category-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .category-btn.active {
+            background: var(--secondary);
+            transform: scale(1.05);
+        }
+        
+        .flashcard-container {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .flashcard-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .flashcard {
+            background: var(--light);
+            border-radius: 20px;
+            min-height: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+        
+        .card-front {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+            background: var(--light);
+            color: var(--dark);
+            border-radius: 20px;
+            justify-content: flex-start;
+            padding-top: 80px;
+        }
+        
+        .section-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-family: 'Bebas Neue', cursive;
+            letter-spacing: 2px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark);
+            line-height: 1.3;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .card-back .section-title {
+            color: var(--dark);
+        }
+        
+        .section-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--dark);
+            width: 100%;
+            text-align: left;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        
+        .card-back .section-text {
+            color: var(--dark);
+        }
+        
+        .act-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--purple);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .progress {
+            text-align: center;
+            color: var(--light);
+            font-size: 1.2rem;
+            margin-top: 20px;
+            font-weight: 700;
+        }
+        
+        .flip-hint {
+            text-align: center;
+            color: var(--accent);
+            margin-top: 20px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .flashcard {
+                min-height: 350px;
+            }
+            
+            .card-face {
+                padding: 30px 20px;
+            }
+            
+            .card-back {
+                padding-top: 60px;
+            }
+            
+            .section-number {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 1.4rem;
+            }
+            
+            .section-text {
+                font-size: 1rem;
+            }
+            
+            .category-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .control-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ATIP & PA Flashcards</h1>
+            <p class="subtitle">Master the Access to Information & Privacy Acts</p>
+        </header>
+        
+        <div class="category-selector">
+            <button class="category-btn" onclick="selectCategory('atia')">Access to Information Act</button>
+            <button class="category-btn" onclick="selectCategory('pa')">Privacy Act</button>
+        </div>
+        
+        <div id="atia-cards" class="flashcard-container">
+            <div class="flashcard" onclick="flipCard(this)">
+                <div class="card-face">
+                    <div class="act-indicator">ATIA</div>
+                    <div class="section-number">Section 10</div>
+                    <div class="section-title">Where access is refused</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="section-text">Where the head of a government institution refuses to give access to a record requested under this Part or a part thereof, the head of the institution shall state in the notice given under paragraph 7(a):
+(a) that the record does not exist, or
+(b) the specific provision of this Part on which the refusal was based or, where the head of the institution does not indicate whether a record exists, the provision on which a refusal could reasonably be expected to be based if the record existed.</div>
+                </div>
+            </div>
+            <div class="flip-hint">Click card to flip</div>
+            <div class="controls">
+                <button class="control-btn" onclick="previousCard('atia')">Previous</button>
+                <button class="control-btn" onclick="shuffleCards('atia')">Shuffle</button>
+                <button class="control-btn" onclick="nextCard('atia')">Next</button>
+            </div>
+            <div class="progress">Card <span id="atia-current">1</span> of <span id="atia-total">0</span></div>
+        </div>
+        
+        <div id="pa-cards" class="flashcard-container">
+            <div class="flashcard" onclick="flipCard(this)">
+                <div class="card-face">
+                    <div class="act-indicator">PA</div>
+                    <div class="section-number">Section 18(1)</div>
+                    <div class="section-title">Governor in Council may designate exempt banks</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="section-text">The Governor in Council may, by order, designate as exempt banks certain personal information banks that contain files all of which consist predominantly of personal information described in section 21 or 22</div>
+                </div>
+            </div>
+            <div class="flip-hint">Click card to flip</div>
+            <div class="controls">
+                <button class="control-btn" onclick="previousCard('pa')">Previous</button>
+                <button class="control-btn" onclick="shuffleCards('pa')">Shuffle</button>
+                <button class="control-btn" onclick="nextCard('pa')">Next</button>
+            </div>
+            <div class="progress">Card <span id="pa-current">1</span> of <span id="pa-total">0</span></div>
+        </div>
+    </div>
+    
+    <script>
+        // Card data
+        const cards = {
+            atia: [
+                {section: "10", title: "Where access is refused", text: "Where the head of a government institution refuses to give access to a record requested under this Part or a part thereof, the head of the institution shall state in the notice given under paragraph 7(a):\n(a) that the record does not exist, or\n(b) the specific provision of this Part on which the refusal was based or, where the head of the institution does not indicate whether a record exists, the provision on which a refusal could reasonably be expected to be based if the record existed."},
+                {section: "15(1)(i)(ii)", title: "International affairs and defence", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be injurious to the conduct of international affairs, the defence of Canada or any state allied or associated with Canada or the detection, prevention or suppression of subversive or hostile activities, including, without restricting the generality of the foregoing, any such information relating to the communications or cryptographic systems of Canada or foreign states used for the defence of Canada or any state allied or associated with Canada"},
+                {section: "15(1)(i)(iii)", title: "International affairs and defence", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be injurious to the conduct of international affairs, the defence of Canada or any state allied or associated with Canada or the detection, prevention or suppression of subversive or hostile activities, including, without restricting the generality of the foregoing, any such information relating to the communications or cryptographic systems of Canada or foreign states used in relation to the detection, prevention or suppression of subversive or hostile activities"},
+                {section: "16(1)(a)(i)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information obtained or prepared by any government institution, or part of any government institution, that is an investigative body specified in the regulations in the course of lawful investigations pertaining to the detection, prevention or suppression of crime if the record came into existence less than twenty years prior to the request"},
+                {section: "16(1)(a)(ii)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information obtained or prepared by any government institution, or part of any government institution, that is an investigative body specified in the regulations in the course of lawful investigations pertaining to the enforcement of any law of Canada or a province if the record came into existence less than twenty years prior to the request"},
+                {section: "16(1)(a)(iii)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information obtained or prepared by any government institution, or part of any government institution, that is an investigative body specified in the regulations in the course of lawful investigations pertaining to activities suspected of constituting threats to the security of Canada within the meaning of the Canadian Security Intelligence Service Act if the record came into existence less than twenty years prior to the request"},
+                {section: "16(1)(b)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains"},
+                {section: "16(1)(c)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains"},
+                {section: "16(1)(d)", title: "Law enforcement and investigations", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains"},
+                {section: "16(2)(a)", title: "Security", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information that could reasonably be expected to facilitate the commission of an offence, including, without restricting the generality of the foregoing, any such information on criminal methods or techniques"},
+                {section: "16(2)(b)", title: "Security", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information that could reasonably be expected to facilitate the commission of an offence, including, without restricting the generality of the foregoing, any such information that is technical information relating to weapons or potential weapons"},
+                {section: "16(2)(c)", title: "Security", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information that could reasonably be expected to facilitate the commission of an offence, including, without restricting the generality of the foregoing, any such information on the vulnerability of particular buildings or other structures or systems, including computer or communication systems, or methods employed to protect such buildings or other structures or systems"},
+                {section: "16(3)", title: "Policing services for provinces or municipalities", text: "The head of a government institution shall refuse to disclose any record requested under this Part that contains information that was obtained or prepared by the Royal Canadian Mounted Police while performing policing services for a province or municipality pursuant to an arrangement made under section 20 of the Royal Canadian Mounted Police Act, where the Government of Canada has, on the request of the province or municipality agreed not to disclose such information"},
+                {section: "16.5", title: "Public Servants Disclosure Protection Act", text: "The head of a government institution shall refuse to disclose any record requested under this Part that contains information created for the purpose of making a disclosure under the Public Servants Disclosure Protection Act or in the course of an investigation into a disclosure under that Act."},
+                {section: "17", title: "Safety of individuals", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to threaten the safety of individuals."},
+                {section: "18(a)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains trade secrets or financial, commercial, scientific or technical information that belongs to the Government of Canada or a government institution and has substantial value or is reasonably likely to have substantial value"},
+                {section: "18(b)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to prejudice the competitive position of a government institution or to interfere with contractual or other negotiations of a government institution"},
+                {section: "18(c)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains scientific or technical information obtained through research by an officer or employee of a government institution, the disclosure of which could reasonably be expected to deprive the officer or employee of priority of publication"},
+                {section: "18(d)(i)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to the currency, coinage or legal tender of Canada"},
+                {section: "18(d)(ii)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to a contemplated change in the rate of bank interest or in government borrowing"},
+                {section: "18(d)(iii)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to a contemplated change in tariff rates, taxes, duties or any other revenue source"},
+                {section: "18(d)(iv)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to a contemplated change in the conditions of operation of financial institutions"},
+                {section: "18(d)(v)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to a contemplated sale or purchase of securities or of foreign or Canadian currency"},
+                {section: "18(d)(vi)", title: "Economic interests of Canada", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to be materially injurious to the financial interests of a government institution or to the ability of the Government of Canada to manage the economy of Canada or could reasonably be expected to result in an undue benefit to any person, including such information that relates to a contemplated sale or acquisition of land or property"},
+                {section: "18.1(1)(a)", title: "Economic interests of certain government institutions", text: "The head of a government institution may refuse to disclose a record requested under this Part that contains trade secrets or financial, commercial, scientific or technical information that belongs to, and has consistently been treated as confidential by the Canada Post Corporation"},
+                {section: "18.1(1)(b)", title: "Economic interests of certain government institutions", text: "The head of a government institution may refuse to disclose a record requested under this Part that contains trade secrets or financial, commercial, scientific or technical information that belongs to, and has consistently been treated as confidential by Export Development Canada"},
+                {section: "18.1(1)(c)", title: "Economic interests of certain government institutions", text: "The head of a government institution may refuse to disclose a record requested under this Part that contains trade secrets or financial, commercial, scientific or technical information that belongs to, and has consistently been treated as confidential by the Public Sector Pension Investment Board"},
+                {section: "18.1(1)(d)", title: "Economic interests of certain government institutions", text: "The head of a government institution may refuse to disclose a record requested under this Part that contains trade secrets or financial, commercial, scientific or technical information that belongs to, and has consistently been treated as confidential by VIA Rail Canada Inc"},
+                {section: "19(1)", title: "Personal Information", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any record requested under this Part that contains personal information"},
+                {section: "20(1)(a)", title: "Third party information", text: "Subject to this section, the head of a government institution shall refuse to disclose any record requested under this Part that contains trade secrets of a third party"},
+                {section: "20(1)(b)", title: "Third party information", text: "Subject to this section, the head of a government institution shall refuse to disclose any record requested under this Part that contains financial, commercial, scientific or technical information that is confidential information supplied to a government institution by a third party and is treated consistently in a confidential manner by the third party"},
+                {section: "20(1)(b.1)", title: "Third party information", text: "Subject to this section, the head of a government institution shall refuse to disclose any record requested under this Part that contains information that is supplied in confidence to a government institution by a third party for the preparation, maintenance, testing or implementation by the government institution of emergency management plans within the meaning of section 2 of the Emergency Management Act and that concerns the vulnerability of the third party's buildings or other structures, its networks or systems, including its computer or communications networks or systems, or the methods used to protect any of those buildings, structures, networks or systems"},
+                {section: "20(1)(c)", title: "Third party information", text: "Subject to this section, the head of a government institution shall refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to result in material financial loss or gain to, or could reasonably be expected to prejudice the competitive position of, a third party"},
+                {section: "20(1)(d)", title: "Third party information", text: "Subject to this section, the head of a government institution shall refuse to disclose any record requested under this Part that contains information the disclosure of which could reasonably be expected to interfere with contractual or other negotiations of a third party"},
+                {section: "21(1)(a)", title: "Advice, etc.", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains advice or recommendations developed by or for a government institution or a minister of the Crown"},
+                {section: "21(1)(b)", title: "Advice, etc.", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains an account of consultations or deliberations in which directors, officers or employees of a government institution, a minister of the Crown or the staff of a minister participate"},
+                {section: "21(1)(c)", title: "Advice, etc.", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains positions or plans developed for the purpose of negotiations carried on or to be carried on by or on behalf of the Government of Canada and considerations relating thereto"},
+                {section: "21(1)(d)", title: "Advice, etc.", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains plans relating to the management of personnel or the administration of a government institution that have not yet been put into operation"},
+                {section: "22", title: "Testing procedures, tests and audits", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information relating to testing or auditing procedures or techniques or details of specific tests to be given or audits to be conducted if the disclosure would prejudice the use or results of particular tests or audits"},
+                {section: "22.1(1)", title: "Internal audits", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains a draft report of an internal audit of a government institution or any related audit working paper if the record came into existence less than fifteen years before the request was made.\n\nException:\n(2) However, the head of a government institution shall not refuse under subsection (1) to disclose a draft report of an internal audit of a government institution if a final report of the audit has been published or if a final report of the audit is not delivered to the institution within two years after the day on which the audit was first commenced."},
+                {section: "23", title: "Protected information — solicitors, advocates and notaries", text: "The head of a government institution may refuse to disclose any record requested under this Part that contains information that is subject to solicitor-client privilege or the professional secrecy of advocates and notaries or to litigation privilege."},
+                {section: "24(1)", title: "Statutory prohibitions against disclosure", text: "The head of a government institution shall refuse to disclose any record requested under this Part that contains information the disclosure of which is restricted by or pursuant to any provision set out in Schedule II"},
+                {section: "26", title: "Refusal of access if information to be published", text: "The head of a government institution may refuse to disclose any record requested under this Part or any part of a record if the head of the institution believes on reasonable grounds that the material in the record or in part of the record will be published by a government institution, agent of the Government of Canada or minister of the Crown — other than under Part 2 — within 90 days after the request is made or within any further period of time that may be necessary for printing or translating the material for the purpose of printing it."},
+                {section: "68(a)", title: "Exclusions", text: "This Part does not apply to published material, other than material published under Part 2, or material available for purchase by the public"},
+                {section: "68(b)", title: "Exclusions", text: "This Part does not apply to library or museum material preserved solely for public reference or exhibition purposes"},
+                {section: "68(c)", title: "Exclusions", text: "This Part does not apply to material placed in the Library and Archives of Canada, the National Gallery of Canada, the Canadian Museum of History, the Canadian Museum of Nature, the National Museum of Science and Technology, the Canadian Museum for Human Rights or the Canadian Museum of Immigration at Pier 21 by or on behalf of persons or organizations other than government institutions"},
+                {section: "69(1)(a)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, memoranda the purpose of which is to present proposals or recommendations to Council"},
+                {section: "69(1)(b)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, discussion papers the purpose of which is to present background explanations, analyses of problems or policy options to Council for consideration by Council in making decisions"},
+                {section: "69(1)(c)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, agenda of Council or records recording deliberations or decisions of Council"},
+                {section: "69(1)(d)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, records used for or reflecting communications or discussions between ministers of the Crown on matters relating to the making of government decisions or the formulation of government policy"},
+                {section: "69(1)(e)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, records the purpose of which is to brief ministers of the Crown in relation to matters that are before, or are proposed to be brought before, Council or that are the subject of communications or discussions referred to in paragraph (d)"},
+                {section: "69(1)(f)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, draft legislation"},
+                {section: "69(1)(g)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Part does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, records that contain information about the contents of any record within a class of records referred to in paragraphs (a) to (f)"},
+                {section: "69.1", title: "Certificate under Canada Evidence Act", text: "If a certificate under section 38.13 or 38.41 of the Canada Evidence Act prohibiting the disclosure of information contained in a record is issued before a complaint is filed under this Part in respect of a request for access to that information, this Part does not apply to that information"}
+            ],
+            pa: [
+                {section: "18(1)", title: "Governor in Council may designate exempt banks", text: "The Governor in Council may, by order, designate as exempt banks certain personal information banks that contain files all of which consist predominantly of personal information described in section 21 or 22"},
+                {section: "18(2)", title: "Disclosure may be refused", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that is contained in a personal information bank designated as an exempt bank under subsection (1)"},
+                {section: "18(3)(a)", title: "Contents of order", text: "An order made under subsection (1) shall specify the section on the basis of which the order is made"},
+                {section: "18(3)(b)", title: "Contents of order", text: "An order made under subsection (1) shall specify where a personal information bank is designated that contains files that consist predominantly of personal information described in subparagraph 22(1)(a)(ii), the law concerned."},
+                {section: "19(1)(a)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from the government of a foreign state or an institution thereof"},
+                {section: "19(1)(b)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from an international organization of states or an institution thereof"},
+                {section: "19(1)(c)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from the government of a province or an institution thereof"},
+                {section: "19(1)(d)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from a municipal or regional government established by or pursuant to an Act of the legislature of a province or an institution of such a government"},
+                {section: "19(1)(e)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from the council, as defined in the Westbank First Nation Self-Government Agreement given effect by the Westbank First Nation Self-Government Act"},
+                {section: "19(1)(e.1)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from the Whitecap Dakota Government, as defined in section 2 of the Self-Government Treaty Recognizing the Whitecap Dakota Nation / Wapaha Ska Dakota Oyate Act;"},
+                {section: "19(1)(f)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from the council of a participating First Nation as defined in subsection 2(1) of the First Nations Jurisdiction over Education in British Columbia Act"},
+                {section: "19(1)(g)", title: "Personal information obtained in confidence", text: "Subject to subsection (2), the head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained in confidence from a First Nation Government or the Anishinabek Nation Government, as defined in section 2 of the Anishinabek Nation Governance Agreement Act, or an Anishinaabe Institution, within the meaning of section 1.1 of the Agreement, as defined in section 2 of that Act."},
+                {section: "20", title: "Federal-provincial affairs", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the disclosure of which could reasonably be expected to be injurious to the conduct by the Government of Canada of federal-provincial affairs."},
+                {section: "21", title: "International affairs and defence", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the disclosure of which could reasonably be expected to be injurious to the conduct of international affairs, the defence of Canada or any state allied or associated with Canada, as defined in subsection 15(2) of the Access to Information Act, or the efforts of Canada toward detecting, preventing or suppressing subversive or hostile activities, as defined in subsection 15(2) of the Access to Information Act, including, without restricting the generality of the foregoing, any such information listed in paragraphs 15(1)(a) to (i) of the Access to Information Act."},
+                {section: "22(1)(a)(i)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the detection, prevention or suppression of crime"},
+                {section: "22(1)(a)(ii)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the enforcement of any law of Canada or a province"},
+                {section: "22(1)(a)(iii)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) activities suspected of constituting threats to the security of Canada within the meaning of the Canadian Security Intelligence Service Act"},
+                {section: "22(1)(b)(i)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) relating to the existence or nature of a particular investigation"},
+                {section: "22(1)(b)(ii)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) relating to the existence or nature of a particular investigation"},
+                {section: "22(1)(b)(iii)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that was obtained or prepared in the course of an investigation"},
+                {section: "22(1)(c)", title: "Law enforcement and investigation", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the disclosure of which could reasonably be expected to be injurious to the security of penal institutions"},
+                {section: "22(2)", title: "Policing services for provinces or municipalities", text: "The head of a government institution shall refuse to disclose any personal information requested under subsection 12(1) that was obtained or prepared by the Royal Canadian Mounted Police while performing policing services for a province or municipality pursuant to an arrangement made under section 20 of the Royal Canadian Mounted Police Act, where the Government of Canada has, on the request of the province or municipality, agreed not to disclose such information."},
+                {section: "22.3", title: "Public Servants Disclosure Protection Act", text: "The head of a government institution shall refuse to disclose personal information requested under subsection 12(1) that was created for the purpose of making a disclosure under the Public Servants Disclosure Protection Act or in the course of an investigation into a disclosure under that Act."},
+                {section: "23(a)", title: "Security clearances", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that was obtained or prepared by an investigative body specified in the regulations for the purpose of determining whether to grant security clearances required by the Government of Canada or a government institution in respect of individuals employed by or performing services for the Government of Canada or a government institution, individuals employed by or performing services for a person or body performing services for the Government of Canada or a government institution, individuals seeking to be so employed or seeking to perform those services"},
+                {section: "23(b)", title: "Security clearances", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that was obtained or prepared by an investigative body specified in the regulations for the purpose of determining whether to grant security clearances required by the government of a province or a foreign state or an institution thereof"},
+                {section: "24(a)", title: "Individuals sentenced for an offence", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that was collected or obtained by the Correctional Service of Canada or the Parole Board of Canada while the individual who made the request was under sentence for an offence against any Act of Parliament, if the disclosure could reasonably be expected to lead to a serious disruption of the individual's institutional, parole or statutory release program"},
+                {section: "24(b)", title: "Individuals sentenced for an offence", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that was collected or obtained by the Correctional Service of Canada or the Parole Board of Canada while the individual who made the request was under sentence for an offence against any Act of Parliament, if the disclosure could reasonably be expected to reveal information about the individual originally obtained on a promise of confidentiality, express or implied"},
+                {section: "25", title: "Safety of individuals", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) the disclosure of which could reasonably be expected to threaten the safety of individuals."},
+                {section: "26", title: "Information about another individual", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) about an individual other than the individual who made the request, and shall refuse to disclose such information where the disclosure is prohibited under section 8"},
+                {section: "27", title: "Protected information — solicitors, advocates and notaries", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that is subject to solicitor-client privilege or the professional secrecy of advocates and notaries or to litigation privilege."},
+                {section: "28", title: "Medical record", text: "The head of a government institution may refuse to disclose any personal information requested under subsection 12(1) that relates to the physical or mental health of the individual who requested it where the examination of the information by the individual would be contrary to the best interests of the individual"},
+                {section: "69(1)(a)", title: "Act does not apply to certain materials", text: "This Act does not apply to library or museum material preserved solely for public reference or exhibition purposes"},
+                {section: "69(1)(b)", title: "Act does not apply to certain materials", text: "This Act does not apply to material placed in the Library and Archives of Canada, the National Gallery of Canada, the Canadian Museum of History, the Canadian Museum of Nature, the National Museum of Science and Technology, the Canadian Museum for Human Rights or the Canadian Museum of Immigration at Pier 21 by or on behalf of persons or organizations other than government institutions"},
+                {section: "70(1)(a)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in memoranda the purpose of which is to present proposals or recommendations to Council"},
+                {section: "70(1)(b)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in discussion papers the purpose of which is to present background explanations, analyses of problems or policy options to Council for consideration by Council in making decisions"},
+                {section: "70(1)(c)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in agenda of Council or records recording deliberations or decisions of Council"},
+                {section: "70(1)(d)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in records used for or reflecting communications or discussions between ministers of the Crown on matters relating to the making of government decisions or the formulation of government policy"},
+                {section: "70(1)(e)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in records the purpose of which is to brief ministers of the Crown in relation to matters that are before, or are proposed to be brought before, Council or that are the subject of communications or discussions referred to in paragraph (d)"},
+                {section: "70(1)(f)", title: "Confidences of the Queen's Privy Council for Canada", text: "This Act does not apply to confidences of the Queen's Privy Council for Canada, including, without restricting the generality of the foregoing, any information contained in draft legislation"},
+                {section: "70.1", title: "Certificate under Canada Evidence Act", text: "If a certificate under section 38.13 or 38.41 of the Canada Evidence Act prohibiting the disclosure of personal information of a specific individual is issued before a complaint is filed by that individual under this Act in respect of a request for access to that information, the provisions of this Act respecting that individual's right of access to their personal information do not apply to the information that is subject to the certificate."}
+            ]
+        };
+        
+        let currentIndices = {
+            atia: 0,
+            pa: 0
+        };
+        
+        let currentCategory = null;
+        
+        function selectCategory(category) {
+            // Hide all containers
+            document.querySelectorAll('.flashcard-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected container
+            document.getElementById(`${category}-cards`).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            currentCategory = category;
+            updateCard(category);
+            updateProgress(category);
+        }
+        
+        function flipCard(card) {
+            card.classList.toggle('flipped');
+        }
+        
+        function updateCard(category) {
+            const container = document.getElementById(`${category}-cards`);
+            const cardData = cards[category][currentIndices[category]];
+            
+            container.innerHTML = `
+                <div class="flashcard" onclick="flipCard(this)">
+                    <div class="card-face card-front">
+                        <div class="act-indicator">${category.toUpperCase()}</div>
+                        <div class="section-number">Section ${cardData.section}</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="act-indicator">${category.toUpperCase()}</div>
+                        <div class="section-title">${cardData.title}</div>
+                        <div class="section-text">${cardData.text.replace(/\n/g, '<br><br>')}</div>
+                    </div>
+                </div>
+                <div class="flip-hint">Click card to flip</div>
+                <div class="controls">
+                    <button class="control-btn" onclick="previousCard('${category}')">Previous</button>
+                    <button class="control-btn" onclick="shuffleCards('${category}')">Shuffle</button>
+                    <button class="control-btn" onclick="nextCard('${category}')">Next</button>
+                </div>
+                <div class="progress">Card <span id="${category}-current">${currentIndices[category] + 1}</span> of <span id="${category}-total">${cards[category].length}</span></div>
+            `;
+        }
+        
+        function nextCard(category) {
+            currentIndices[category] = (currentIndices[category] + 1) % cards[category].length;
+            updateCard(category);
+        }
+        
+        function previousCard(category) {
+            currentIndices[category] = (currentIndices[category] - 1 + cards[category].length) % cards[category].length;
+            updateCard(category);
+        }
+        
+        function shuffleCards(category) {
+            // Fisher-Yates shuffle
+            for (let i = cards[category].length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[category][i], cards[category][j]] = [cards[category][j], cards[category][i]];
+            }
+            currentIndices[category] = 0;
+            updateCard(category);
+        }
+        
+        function updateProgress(category) {
+            document.getElementById(`${category}-current`).textContent = currentIndices[category] + 1;
+            document.getElementById(`${category}-total`).textContent = cards[category].length;
+        }
+        
+        // Initialize with ATIA cards
+        window.onload = function() {
+            selectCategory('atia');
+            document.querySelector('.category-btn').classList.add('active');
+        }
+    </script>
+</body>
+</html>
